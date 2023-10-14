@@ -85,6 +85,12 @@ endfunction(set_default_configuration_release)
 # Generate nvcc compiler flags given a list of architectures
 # Also generates PTX for the most recent architecture for forwards compatibility
 function(format_gencode_flags flags out)
+  if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.18 AND
+      CMAKE_CUDA_ARCHITECTURES)
+    message(STATUS "CMAKE_CUDA_ARCHITECTURES: ${CMAKE_CUDA_ARCHITECTURES}")
+    return()
+  endif ()
+
   if(CMAKE_CUDA_COMPILER_VERSION MATCHES "^([0-9]+\\.[0-9]+)")
     set(CUDA_VERSION "${CMAKE_MATCH_1}")
   endif()
@@ -104,7 +110,6 @@ function(format_gencode_flags flags out)
   endif()
 
   if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.18")
-    cmake_policy(SET CMP0104 NEW)
     list(GET flags -1 latest_arch)
     list(TRANSFORM flags APPEND "-real")
     list(APPEND flags ${latest_arch})
@@ -139,10 +144,6 @@ function(xgboost_set_cuda_flags target)
     $<$<COMPILE_LANGUAGE:CUDA>:${GEN_CODE}>
     $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=${OpenMP_CXX_FLAGS}>
     $<$<COMPILE_LANGUAGE:CUDA>:-Xfatbin=-compress-all>)
-
-  if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.18")
-    set_property(TARGET ${target} PROPERTY CUDA_ARCHITECTURES ${CMAKE_CUDA_ARCHITECTURES})
-  endif (CMAKE_VERSION VERSION_GREATER_EQUAL "3.18")
 
   if (FORCE_COLORED_OUTPUT)
     if (FORCE_COLORED_OUTPUT AND (CMAKE_GENERATOR STREQUAL "Ninja") AND

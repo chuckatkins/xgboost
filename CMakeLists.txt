@@ -52,8 +52,12 @@ option(USE_CUDA  "Build with GPU acceleration" OFF)
 option(USE_NCCL  "Build with NCCL to enable distributed GPU support." OFF)
 option(BUILD_WITH_SHARED_NCCL "Build with shared NCCL library." OFF)
 option(BUILD_WITH_CUDA_CUB "Build with cub in CUDA installation" OFF)
-set(GPU_COMPUTE_VER "" CACHE STRING
-  "Semicolon separated list of compute versions to be built against, e.g. '35;61'")
+if (USE_CUDA)
+  if (CMAKE_VERSION VERSION_LESS 3.18 OR NOT CMAKE_CUDA_ARCHITECTURES)
+    set(GPU_COMPUTE_VER "" CACHE STRING
+      "Semicolon separated list of compute versions to be built against, e.g. '35;61'")
+  endif ()
+endif ()
 ## Copied From dmlc
 option(USE_HDFS "Build with HDFS support" OFF)
 option(USE_AZURE "Build with AZURE support" OFF)
@@ -142,13 +146,26 @@ endif (USE_SANITIZER)
 if (USE_CUDA)
   set(USE_OPENMP ON CACHE BOOL "CUDA requires OpenMP" FORCE)
   # `export CXX=' is ignored by CMake CUDA.
+
   set(CMAKE_CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER})
   message(STATUS "Configured CUDA host compiler: ${CMAKE_CUDA_HOST_COMPILER}")
 
+  if (POLICY CMP0104)
+    cmake_policy(SET CMP0104 NEW)
+  endif ()
+
+  if (GPU_COMPUTE_VER OR NOT CMAKE_CUDA_ARCHITECTURES)
+    set(_compute_cuda_archs TRUE)
+  endif ()
   enable_language(CUDA)
   if (${CMAKE_CUDA_COMPILER_VERSION} VERSION_LESS 11.0)
     message(FATAL_ERROR "CUDA version must be at least 11.0!")
   endif()
+
+  if (_compute_cuda_archs)
+    unset(CMAKE_CUDA_ARCHITECTURES CACHE)
+    unset(CMAKE_CUDA_ARCHITECTURES)
+  endif ()
   set(GEN_CODE "")
   format_gencode_flags("${GPU_COMPUTE_VER}" GEN_CODE)
   add_subdirectory(${PROJECT_SOURCE_DIR}/gputreeshap)
