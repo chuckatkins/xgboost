@@ -182,14 +182,23 @@ function(xgboost_set_cuda_flags target)
   if (PLUGIN_RMM)
     set_target_properties(${target} PROPERTIES
       CUDA_STANDARD 17
-      CUDA_STANDARD_REQUIRED ON
-      CUDA_SEPARABLE_COMPILATION OFF)
+      CUDA_STANDARD_REQUIRED ON)
   else ()
     set_target_properties(${target} PROPERTIES
       CUDA_STANDARD 14
-      CUDA_STANDARD_REQUIRED ON
-      CUDA_SEPARABLE_COMPILATION OFF)
+      CUDA_STANDARD_REQUIRED ON)
   endif (PLUGIN_RMM)
+
+  # CUDA device LTO also requires separable compilation to be enabled
+  if (USE_CUDA_LTO)
+    set_target_properties(${target} PROPERTIES
+      INTERPROCEDURAL_OPTIMIZATION ON
+      CUDA_SEPARABLE_COMPILATION ON)
+  else ()
+    set_target_properties(${target} PROPERTIES
+      INTERPROCEDURAL_OPTIMIZATION OFF
+      CUDA_SEPARABLE_COMPILATION OFF)
+  endif (USE_CUDA_LTO)
 endfunction(xgboost_set_cuda_flags)
 
 macro(xgboost_link_nccl target)

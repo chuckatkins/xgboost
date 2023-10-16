@@ -7,6 +7,8 @@ cmake_policy(SET CMP0079 NEW)
 cmake_policy(SET CMP0076 NEW)
 set(CMAKE_POLICY_DEFAULT_CMP0063 NEW)
 cmake_policy(SET CMP0063 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
+cmake_policy(SET CMP0069 NEW)
 
 if ((${CMAKE_VERSION} VERSION_GREATER 3.13) OR (${CMAKE_VERSION} VERSION_EQUAL 3.13))
   cmake_policy(SET CMP0077 NEW)
@@ -25,6 +27,8 @@ write_version()
 set_default_configuration_release()
 
 #-- Options
+include(CMakeDependentOption)
+
 ## User options
 option(BUILD_C_DOC "Build documentation for C APIs using Doxygen." OFF)
 option(USE_OPENMP "Build with OpenMP support." ON)
@@ -58,6 +62,14 @@ if (USE_CUDA)
       "Semicolon separated list of compute versions to be built against, e.g. '35;61'")
   endif ()
 endif ()
+# CUDA device LTO was introduced in CMake v3.25 and requires host LTO to also be enabled but can still
+# be explicitly disabled allowing for LTO on host only, host and device, or neither, but device-only LTO
+# is not a supproted configuration
+cmake_dependent_option(USE_CUDA_LTO
+  "Enable link-time optimization for CUDA device code"
+  "${CMAKE_INTERPROCEDURAL_OPTIMIZATION}"
+  "CMAKE_VERSION VERSION_GREATER_EQUAL 3.25;USE_CUDA;CMAKE_INTERPROCEDURAL_OPTIMIZATION"
+  OFF)
 ## Copied From dmlc
 option(USE_HDFS "Build with HDFS support" OFF)
 option(USE_AZURE "Build with AZURE support" OFF)
