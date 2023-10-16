@@ -88,6 +88,11 @@ option(PLUGIN_FEDERATED "Build with Federated Learning" OFF)
 option(PLUGIN_UPDATER_ONEAPI "DPC++ updater" OFF)
 option(ADD_PKGCONFIG "Add xgboost.pc into system." ON)
 
+# Allow the CUDA Runtime library to be overridden
+set(CMAKE_CUDA_RUNTIME_LIBRARY "Static" CACHE STRING "Select the Shared or Static CUDA runtime library to link to")
+set_property(CACHE CMAKE_CUDA_RUNTIME_LIBRARY PROPERTY STRINGS "Static;Shared;None")
+mark_as_advanced(CMAKE_CUDA_RUNTIME_LIBRARY)
+
 #-- Checks for building XGBoost
 if (USE_DEBUG_OUTPUT AND (NOT (CMAKE_BUILD_TYPE MATCHES Debug)))
   message(SEND_ERROR "Do not enable `USE_DEBUG_OUTPUT' with release build.")
